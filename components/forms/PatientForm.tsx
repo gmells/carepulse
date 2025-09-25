@@ -8,8 +8,9 @@ import { Form } from "@/components/ui/form";
 import CustomFormField from "../CustomFormField";
 import SubmitButton from "../SubmitButton";
 import { useState } from "react";
-import { userFormValidation } from "@/lib/validation";
+import { UserFormValidation } from "@/lib/validation";
 import { useRouter } from "next/navigation";
+import { createUser } from "@/lib/actions/patient.actions";
 
 export enum FormFieldType {
   INPUT = "input",
@@ -23,10 +24,10 @@ export enum FormFieldType {
 
 const PatientForm = () => {
   const router = useRouter();
-  const [isLoading, setisLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof userFormValidation>>({
-    resolver: zodResolver(userFormValidation),
+  const form = useForm<z.infer<typeof UserFormValidation>>({
+    resolver: zodResolver(UserFormValidation),
     defaultValues: {
       name: "",
       email: "",
@@ -38,17 +39,24 @@ const PatientForm = () => {
     name,
     email,
     phone,
-  }: z.infer<typeof userFormValidation>) {
-    setisLoading(true);
+  }: z.infer<typeof UserFormValidation>) {
+    setIsLoading(true);
 
     try {
-      // const userData = { name, email, phone };
-      // const user = await createUser(userData)
-      // if(user) router.push(`/patients/${user.$id}/register`)
+      const userData = { name, email, phone };
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      const user = await res.json();
+
+      if (user) router.push(`/patients/${user.$id}/register`);
     } catch (error) {
-      console.log(error);
+      console.log("An error occured", error);
     }
   }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1">
@@ -81,7 +89,7 @@ const PatientForm = () => {
           fieldType={FormFieldType.PHONE_INPUT}
           control={form.control}
           name="phone"
-          label="Phone Number"
+          label="Phone number"
           placeholder="(44) 123-456789"
         />
 
